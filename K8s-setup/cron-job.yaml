@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: py-syncer
+  namespace: test
+spec:
+  schedule: "0 11 * * *"  
+  jobTemplate:
+    spec:
+      backoffLimit: 4 
+      template:
+        metadata:
+          labels:
+            app: py-syncer
+        spec:
+          serviceAccountName: py-syncer #need to create sa with IRSA
+          containers:
+          - name: py-syncer-container
+            image: docker.io/your-image  #specify your image 
+            securityContext:
+              privileged: true
+            volumeMounts:
+            - name: processed-image
+              mountPath: /opt/syncer/process  #need to initialise one time
+              subPath: process
+          volumes:
+          - name: processed-image
+            persistentVolumeClaim:
+              claimName: py-syncer  
+          restartPolicy: Never  
